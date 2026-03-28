@@ -10,22 +10,17 @@ interface TrackIECSState {
   membros: Membro[];
   eventos: Evento[];
   
-  // Auth
   login: (u: User) => void;
   logout: () => void;
-  
-  // Geral
   fetchInitialData: () => Promise<void>;
   
-  // Músicas
   addMusica: (m: any) => Promise<void>;
   deleteMusica: (id: string) => Promise<void>;
-
-  // Membros
+  
   addMembro: (m: any) => Promise<void>;
   deleteMembro: (id: string) => Promise<void>;
 
-  // EVENTOS (ESCALAS) - Adicionado e Corrigido
+  // FUNÇÕES QUE FALTAVAM
   upsertEvento: (ev: any) => Promise<void>;
   deleteEvento: (id: string) => Promise<void>;
   confirmPresenca: (eventoId: string, membroId: string) => Promise<void>;
@@ -43,40 +38,19 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
   logout: () => set({ isAuth: false, user: null }),
 
   fetchInitialData: async () => {
-    try {
-      const { data: mus } = await supabase.from('musicas').select('*').order('titulo');
-      const { data: mem } = await supabase.from('membros').select('*').order('nome');
-      const { data: eve } = await supabase.from('eventos').select('*').order('data', { ascending: false });
-      
-      set({ 
-        musicas: mus || [], 
-        membros: mem || [], 
-        eventos: eve || [] 
-      });
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-    }
+    const { data: mus } = await supabase.from('musicas').select('*').order('titulo');
+    const { data: mem } = await supabase.from('membros').select('*').order('nome');
+    const { data: eve } = await supabase.from('eventos').select('*').order('data', { ascending: false });
+    set({ musicas: mus || [], membros: mem || [], eventos: eve || [] });
   },
 
-  // Músicas
   addMusica: async (m) => {
     const { error } = await supabase.from('musicas').insert([{
-      titulo: m.titulo,
-      artista: m.artista,
-      tom: m.tom,
-      bpm: m.bpm ? parseInt(m.bpm) : null,
-      intensidade: m.intensidade,
-      letra: m.letra,
-      link_cifra: m.linkCifra,
-      link_video: m.linkVideo
+      titulo: m.titulo, artista: m.artista, tom: m.tom,
+      bpm: m.bpm ? parseInt(m.bpm) : null, intensidade: m.intensidade,
+      letra: m.letra, link_cifra: m.linkCifra, link_video: m.linkVideo
     }]);
-
-    if (error) {
-      toast.error("Erro ao salvar música.");
-    } else {
-      await get().fetchInitialData();
-      toast.success("Música salva!");
-    }
+    if (!error) await get().fetchInitialData();
   },
 
   deleteMusica: async (id) => {
@@ -84,14 +58,9 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
     get().fetchInitialData();
   },
 
-  // Membros
   addMembro: async (m) => {
     const { error } = await supabase.from('membros').insert([m]);
-    if (error) toast.error("Erro ao salvar membro.");
-    else {
-      await get().fetchInitialData();
-      toast.success("Membro adicionado!");
-    }
+    if (!error) await get().fetchInitialData();
   },
 
   deleteMembro: async (id) => {
@@ -99,10 +68,9 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
     get().fetchInitialData();
   },
 
-  // EVENTOS (Lógica de Upsert e Presença)
+  // IMPLEMENTAÇÃO DO SALVAMENTO DE ESCALAS
   upsertEvento: async (ev) => {
-    // Mapeamento para o Banco (CamelCase para snake_case)
-    const dadosParaSalvar = {
+    const dados = {
       titulo: ev.titulo,
       data: ev.data,
       hora_inicio: ev.horaInicio,
@@ -112,50 +80,37 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
       status: ev.status || 'Pendente'
     };
 
-    let error;
-    if (ev.id) {
-      const { error: err } = await supabase.from('eventos').update(dadosParaSalvar).eq('id', ev.id);
-      error = err;
-    } else {
-      const { error: err } = await supabase.from('eventos').insert([dadosParaSalvar]);
-      error = err;
-    }
+    const { error } = ev.id 
+      ? await supabase.from('eventos').update(dados).eq('id', ev.id)
+      : await supabase.from('eventos').insert([dados]);
 
     if (error) {
-      console.error("Erro Supabase:", error);
+      console.error(error);
       toast.error("Erro ao salvar escala.");
     } else {
       await get().fetchInitialData();
-      toast.success("Escala atualizada!");
+      toast.success("Escala salva com sucesso!");
     }
   },
 
   deleteEvento: async (id) => {
-    const { error } = await supabase.from('eventos').delete().eq('id', id);
-    if (!error) get().fetchInitialData();
+    await supabase.from('eventos').delete().eq('id', id);
+    get().fetchInitialData();
   },
 
-  confirmPresenca: async (eventoId, membroId) => {
-    const evento = get().eventos.find(e => e.id === eventoId);
-    if (!evento) return;
-
-    const novaEquipe = evento.equipe.map(slot => 
-      slot.membroId === membroId ? { ...slot, status: 'Confirmado' } : slot
-    );
-
-    const { error } = await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', eventoId);
-    if (!error) get().fetchInitialData();
+  confirmPresenca: async (evId, mId) => {
+    const ev = get().eventos.find(e => e.id === evId);
+    if (!ev) return;
+    const novaEquipe = ev.equipe.map((s: any) => s.membroId === mId ? { ...s, status: 'Confirmado' } : s);
+    await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', evId);
+    get().fetchInitialData();
   },
 
-  recusarPresenca: async (eventoId, membroId) => {
-    const evento = get().eventos.find(e => e.id === eventoId);
-    if (!evento) return;
-
-    const novaEquipe = evento.equipe.map(slot => 
-      slot.membroId === membroId ? { ...slot, status: 'Recusado' } : slot
-    );
-
-    const { error } = await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', eventoId);
-    if (!error) get().fetchInitialData();
+  recusarPresenca: async (evId, mId) => {
+    const ev = get().eventos.find(e => e.id === evId);
+    if (!ev) return;
+    const novaEquipe = ev.equipe.map((s: any) => s.membroId === mId ? { ...s, status: 'Recusado' } : s);
+    await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', evId);
+    get().fetchInitialData();
   }
 }));

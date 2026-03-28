@@ -106,17 +106,20 @@ export default function Dashboard() {
 
         <Grid item xs={12} md={8}>
           <Paper sx={{ ...glassStyle, p: 4 }}>
-            <Typography variant="h6" fontWeight={800} sx={{ mb: 4, color: '#FFFFFF' }}>Dinâmica do Louvor</Typography>
-            <Box sx={{ width: '100%', height: 280 }}>
+            <Typography variant="h6" fontWeight={800} sx={{ color: '#FFFFFF', mb: 4 }}>
+              Dinâmica do Louvor
+            </Typography>
+            {/* ADICIONE HEIGHT: 300 E MINWIDTH: 0 AQUI */}
+            <Box sx={{ width: '100%', height: 300, minWidth: 0 }}> 
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={getDadosEnergia()}>
-                  <Tooltip contentStyle={{ background: '#131c2e', border: 'none', borderRadius: 12, color: '#fff' }} />
-                  <Area type="monotone" dataKey="energia" stroke="#818cf8" strokeWidth={4} fill="#818cf8" fillOpacity={0.3} />
+                  <Tooltip contentStyle={{ background: '#131c2e', border: 'none', borderRadius: 12 }} />
+                  <Area type="monotone" dataKey="energia" stroke="#818cf8" fill="#818cf8" fillOpacity={0.3} />
                 </AreaChart>
               </ResponsiveContainer>
             </Box>
           </Paper>
-        </Grid>
+        </Grid>        
 
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 4, borderRadius: 7, background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', height: '100%' }}>
