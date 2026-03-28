@@ -7,7 +7,6 @@ import {
 import { Search, Plus, Trash2, Music4, Zap, FileText, Video } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { useForm, Controller } from 'react-hook-form';
-import { toast } from 'sonner';
 
 const inputStyle = {
   '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)', fontWeight: 600 },
@@ -30,15 +29,14 @@ export default function Musicas() {
 
   const { register, handleSubmit, control, reset, watch } = useForm({
     defaultValues: {
-      titulo: '', artista: '', tom: 'G', bpm: 70, intensidade: 5, linkCifra: '', linkVideo: ''
+      titulo: '', artista: '', tom: 'G', bpm: 70, intensidade: 5, letra: '', linkCifra: '', linkVideo: ''
     }
   });
 
   const intensityValue = watch('intensidade');
 
-  const handleSave = (data: any) => {
-    addMusica(data);
-    toast.success("Música adicionada!");
+  const handleSave = async (data: any) => {
+    await addMusica(data); // Espera o banco salvar
     setOpen(false);
     reset();
   };
@@ -50,8 +48,8 @@ export default function Musicas() {
   };
 
   const filtered = musicas.filter(m => 
-    m.titulo.toLowerCase().includes(search.toLowerCase()) ||
-    m.artista.toLowerCase().includes(search.toLowerCase())
+    m.titulo?.toLowerCase().includes(search.toLowerCase()) ||
+    m.artista?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -59,7 +57,7 @@ export default function Musicas() {
       <Stack direction="row" justifyContent="space-between" alignItems="flex-end" sx={{ mb: 6 }}>
         <Box>
           <Typography variant="h3" fontWeight={900} sx={{ color: '#FFF', letterSpacing: '-0.04em' }}>Repertório</Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.6)' }}>Biblioteca e dinâmica dos louvores.</Typography>
+          <Typography sx={{ color: 'rgba(255,255,255,0.6)' }}>Biblioteca sincronizada na nuvem.</Typography>
         </Box>
         <Button variant="contained" startIcon={<Plus />} onClick={() => setOpen(true)} sx={{ borderRadius: 3, px: 4, py: 1.5, bgcolor: '#818cf8', fontWeight: 800 }}>
           Nova Música
@@ -77,7 +75,7 @@ export default function Musicas() {
       <Grid container spacing={2}>
         {filtered.map((m) => (
           <Grid item xs={12} key={m.id}>
-            <Paper elevation={0} sx={{ p: 2.5, borderRadius: 4, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: 3, transition: '0.3s', '&:hover': { transform: 'translateY(-4px)', borderColor: '#818cf8' } }}>
+            <Paper elevation={0} sx={{ p: 2.5, borderRadius: 4, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', gap: 3, transition: '0.3s', '&:hover': { transform: 'translateY(-4px)', borderColor: '#818cf8' } }}>
               <Box sx={{ width: 50, height: 50, borderRadius: 3, bgcolor: alpha(getIntensityColor(m.intensidade), 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', color: getIntensityColor(m.intensidade) }}>
                 <Music4 size={24} />
               </Box>
@@ -97,22 +95,11 @@ export default function Musicas() {
         ))}
       </Grid>
 
-      {/* MODAL CORRIGIDO */}
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { bgcolor: '#131c2e', color: 'white', borderRadius: 7, border: '1px solid rgba(255,255,255,0.1)' } }}>
         <DialogTitle sx={{ fontWeight: 900, fontSize: '1.7rem', p: 4 }}>Nova Música</DialogTitle>
         <form onSubmit={handleSubmit(handleSave)}>
           <DialogContent sx={{ p: 4, pt: 0 }}>
             <Stack spacing={3}>
-              <TextField 
-  fullWidth 
-  multiline 
-  rows={6} 
-  label="Letra / Pasta Digital" 
-  {...register('letra')} 
-  variant="filled" 
-  sx={inputStyle} 
-  placeholder="Cole aqui a letra ou a cifra da música..."
-/>
               <TextField fullWidth label="Título" {...register('titulo', {required: true})} variant="filled" sx={inputStyle} />
               <TextField fullWidth label="Artista" {...register('artista')} variant="filled" sx={inputStyle} />
               <Grid container spacing={2}>
@@ -132,12 +119,13 @@ export default function Musicas() {
                 <Controller name="intensidade" control={control} render={({ field }) => (
                   <Slider {...field} min={1} max={10} sx={{ color: getIntensityColor(intensityValue) }} />
                 )} />
-              </Box> {/* AQUI ESTAVA O ERRO: BOX FECHADO CORRETAMENTE AGORA */}
+              </Box>
+              <TextField fullWidth multiline rows={4} label="Letra / Pasta Digital" {...register('letra')} variant="filled" sx={inputStyle} />
             </Stack>
           </DialogContent>
           <DialogActions sx={{ p: 4 }}>
-            <Button onClick={() => setOpen(false)} sx={{ color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>Cancelar</Button>
-            <Button type="submit" variant="contained" sx={{ bgcolor: '#818cf8', px: 4, fontWeight: 800, borderRadius: 3 }}>Salvar Obra</Button>
+            <Button onClick={() => setOpen(false)} sx={{ color: 'rgba(255,255,255,0.5)' }}>Cancelar</Button>
+            <Button type="submit" variant="contained" sx={{ bgcolor: '#818cf8', px: 4, fontWeight: 800, borderRadius: 3 }}>Salvar</Button>
           </DialogActions>
         </form>
       </Dialog>
