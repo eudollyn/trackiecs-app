@@ -9,18 +9,13 @@ interface TrackIECSState {
   musicas: Musica[];
   membros: Membro[];
   eventos: Evento[];
-  
   login: (u: User) => void;
   logout: () => void;
   fetchInitialData: () => Promise<void>;
-  
   addMusica: (m: any) => Promise<void>;
   deleteMusica: (id: string) => Promise<void>;
-  
   addMembro: (m: any) => Promise<void>;
   deleteMembro: (id: string) => Promise<void>;
-
-  // FUNÇÕES QUE FALTAVAM
   upsertEvento: (ev: any) => Promise<void>;
   deleteEvento: (id: string) => Promise<void>;
   confirmPresenca: (eventoId: string, membroId: string) => Promise<void>;
@@ -45,12 +40,11 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
   },
 
   addMusica: async (m) => {
-    const { error } = await supabase.from('musicas').insert([{
+    await supabase.from('musicas').insert([{
       titulo: m.titulo, artista: m.artista, tom: m.tom,
-      bpm: m.bpm ? parseInt(m.bpm) : null, intensidade: m.intensidade,
-      letra: m.letra, link_cifra: m.linkCifra, link_video: m.linkVideo
+      bpm: m.bpm ? parseInt(m.bpm) : null, intensidade: m.intensidade, letra: m.letra
     }]);
-    if (!error) await get().fetchInitialData();
+    get().fetchInitialData();
   },
 
   deleteMusica: async (id) => {
@@ -59,8 +53,8 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
   },
 
   addMembro: async (m) => {
-    const { error } = await supabase.from('membros').insert([m]);
-    if (!error) await get().fetchInitialData();
+    await supabase.from('membros').insert([m]);
+    get().fetchInitialData();
   },
 
   deleteMembro: async (id) => {
@@ -68,12 +62,11 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
     get().fetchInitialData();
   },
 
-  // IMPLEMENTAÇÃO DO SALVAMENTO DE ESCALAS
   upsertEvento: async (ev) => {
     const dados = {
       titulo: ev.titulo,
       data: ev.data,
-      hora_inicio: ev.horaInicio,
+      hora_inicio: ev.horaInicio || ev.hora_inicio,
       local: ev.local || 'Principal',
       setlist: ev.setlist || [],
       equipe: ev.equipe || [],
@@ -84,12 +77,10 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
       ? await supabase.from('eventos').update(dados).eq('id', ev.id)
       : await supabase.from('eventos').insert([dados]);
 
-    if (error) {
-      console.error(error);
-      toast.error("Erro ao salvar escala.");
-    } else {
+    if (error) toast.error("Erro ao salvar escala.");
+    else {
       await get().fetchInitialData();
-      toast.success("Escala salva com sucesso!");
+      toast.success("Escala salva!");
     }
   },
 

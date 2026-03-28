@@ -10,29 +10,14 @@ export interface User {
 export interface Musica {
   id: string;
   titulo: string;
-  artista: string; // Obrigatório para o layout
+  artista: string;
   tom: string;
-  tomOriginal?: string; // Adicionado para bater com o Dialog
   bpm?: number;
-  intensidade: number; // 1 a 10
+  intensidade: number;
   letra?: string;
-  categoria?: string; 
-  linkCifra?: string;
-  linkVideo?: string;
-  link?: string; 
-  tags?: string[]; // Adicionado para o salvamento
-  ativo?: boolean; // Adicionado para o salvamento
+  link_cifra?: string;
+  link_video?: string;
   createdAt: number;
-}
-
-export interface Membro {
-  id: string;
-  nome: string;
-  email: string;
-  telefone?: string;
-  funcoes: string[];
-  ativo: boolean;
-  avatarUrl?: string;
 }
 
 export interface EventoSlot {
@@ -45,10 +30,9 @@ export interface Evento {
   id: string;
   titulo: string;
   data: string;
-  horaInicio: string;
+  hora_inicio: string;
   local: string;
-  tipo: 'Culto' | 'Ensaio' | 'Evento Especial';
-  status: 'Planejado' | 'Confirmado' | 'Concluído';
   setlist: string[];
   equipe: EventoSlot[];
+  status: string;
 }
