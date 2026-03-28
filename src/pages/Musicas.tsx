@@ -4,7 +4,7 @@ import {
   Grid, Paper, Chip, IconButton, Dialog, DialogTitle, 
   DialogContent, DialogActions, MenuItem, Slider, alpha 
 } from '@mui/material';
-import { Search, Plus, Trash2, Music4, Zap, FileText, Video } from 'lucide-react';
+import { Search, Plus, Trash2, Music4, Zap } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { useForm, Controller } from 'react-hook-form';
 
@@ -36,7 +36,7 @@ export default function Musicas() {
   const intensityValue = watch('intensidade');
 
   const handleSave = async (data: any) => {
-    await addMusica(data); // Espera o banco salvar
+    await addMusica(data);
     setOpen(false);
     reset();
   };
@@ -54,12 +54,24 @@ export default function Musicas() {
 
   return (
     <Box sx={{ animation: 'fadeIn 0.5s ease-out' }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-end" sx={{ mb: 6 }}>
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }} 
+        justifyContent="space-between" 
+        alignItems={{ xs: 'flex-start', sm: 'flex-end' }} 
+        spacing={2} 
+        sx={{ mb: 6 }}
+      >
         <Box>
-          <Typography variant="h3" fontWeight={900} sx={{ color: '#FFF', letterSpacing: '-0.04em' }}>Repertório</Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.6)' }}>Biblioteca sincronizada na nuvem.</Typography>
+          <Typography variant="h3" fontWeight={900} sx={{ color: '#FFF', letterSpacing: '-0.04em', fontSize: { xs: '2.2rem', md: '3rem' } }}>Repertório</Typography>
+          <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: { xs: '0.9rem', md: '1rem' } }}>Biblioteca sincronizada na nuvem.</Typography>
         </Box>
-        <Button variant="contained" startIcon={<Plus />} onClick={() => setOpen(true)} sx={{ borderRadius: 3, px: 4, py: 1.5, bgcolor: '#818cf8', fontWeight: 800 }}>
+        <Button 
+          variant="contained" 
+          fullWidth={false}
+          startIcon={<Plus />} 
+          onClick={() => setOpen(true)} 
+          sx={{ borderRadius: 3, px: 4, py: 1.5, bgcolor: '#818cf8', fontWeight: 800, width: { xs: '100%', sm: 'auto' } }}
+        >
           Nova Música
         </Button>
       </Stack>
@@ -75,17 +87,32 @@ export default function Musicas() {
       <Grid container spacing={2}>
         {filtered.map((m) => (
           <Grid item xs={12} key={m.id}>
-            <Paper elevation={0} sx={{ p: 2.5, borderRadius: 4, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', gap: 3, transition: '0.3s', '&:hover': { transform: 'translateY(-4px)', borderColor: '#818cf8' } }}>
-              <Box sx={{ width: 50, height: 50, borderRadius: 3, bgcolor: alpha(getIntensityColor(m.intensidade), 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', color: getIntensityColor(m.intensidade) }}>
+            <Paper elevation={0} sx={{ 
+              p: 2.5, borderRadius: 4, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' }, 
+              gap: { xs: 2, sm: 3 }, 
+              transition: '0.3s', 
+              '&:hover': { transform: 'translateY(-4px)', borderColor: '#818cf8' } 
+            }}>
+              <Box sx={{ 
+                width: 50, height: 50, borderRadius: 3, 
+                bgcolor: alpha(getIntensityColor(m.intensidade), 0.1), 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                color: getIntensityColor(m.intensidade) 
+              }}>
                 <Music4 size={24} />
               </Box>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" fontWeight={800} sx={{ color: '#FFF' }}>{m.titulo}</Typography>
+              
+              <Box sx={{ flex: 1, width: '100%' }}>
+                <Typography variant="h6" fontWeight={800} sx={{ color: '#FFF', fontSize: { xs: '1.1rem', md: '1.25rem' } }}>{m.titulo}</Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)' }}>{m.artista}</Typography>
               </Box>
-              <Stack direction="row" spacing={4} alignItems="center">
-                 <Chip label={m.tom} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: '#818cf8', fontWeight: 800 }} />
-                 <Box sx={{ width: 100, height: 6, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+
+              <Stack direction="row" spacing={3} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: 'space-between' }}>
+                 <Chip label={m.tom} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: '#818cf8', fontWeight: 900 }} />
+                 <Box sx={{ width: { xs: 60, sm: 100 }, height: 6, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
                     <Box sx={{ height: '100%', width: `${m.intensidade * 10}%`, bgcolor: getIntensityColor(m.intensidade) }} />
                  </Box>
                  <IconButton onClick={() => deleteMusica(m.id)} sx={{ color: '#f87171' }}><Trash2 size={18} /></IconButton>
@@ -105,16 +132,16 @@ export default function Musicas() {
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <TextField select fullWidth label="Tom" {...register('tom')} variant="filled" sx={inputStyle}>
-                    {['C', 'G', 'D', 'A', 'E', 'B', 'F'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
+                    {['C', 'G', 'D', 'A', 'E', 'B', 'F', 'Am', 'Em', 'Dm'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
                   </TextField>
                 </Grid>
                 <Grid item xs={6}>
                   <TextField fullWidth type="number" label="BPM" {...register('bpm')} variant="filled" sx={inputStyle} />
                 </Grid>
               </Grid>
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1, mb: 2, textTransform: 'uppercase' }}>
-                  <Zap size={14} /> Energia ({intensityValue}/10)
+              <Box>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                   ENERGIA ({intensityValue}/10)
                 </Typography>
                 <Controller name="intensidade" control={control} render={({ field }) => (
                   <Slider {...field} min={1} max={10} sx={{ color: getIntensityColor(intensityValue) }} />
@@ -124,7 +151,7 @@ export default function Musicas() {
             </Stack>
           </DialogContent>
           <DialogActions sx={{ p: 4 }}>
-            <Button onClick={() => setOpen(false)} sx={{ color: 'rgba(255,255,255,0.5)' }}>Cancelar</Button>
+            <Button onClick={() => setOpen(false)} sx={{ color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>Cancelar</Button>
             <Button type="submit" variant="contained" sx={{ bgcolor: '#818cf8', px: 4, fontWeight: 800, borderRadius: 3 }}>Salvar</Button>
           </DialogActions>
         </form>
