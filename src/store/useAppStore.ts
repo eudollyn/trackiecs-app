@@ -15,12 +15,23 @@ interface TrackIECSState {
   addMembro: (m: any) => Promise<void>;
   upsertEvento: (ev: any) => Promise<void>;
   deleteEvento: (id: string) => Promise<void>;
+
+  isAuth: boolean;
+  user: User | null;
+  login: (userData: User) => void;
+  logout: () => void;
+  
 }
 
 export const useAppStore = create<TrackIECSState>((set, get) => ({
   musicas: [],
   membros: [],
   eventos: [],
+  
+  isAuth: false, // Começa deslogado
+  user: null,
+  login: (u) => set({ isAuth: true, user: u }),
+  logout: () => set({ isAuth: false, user: null }),
 
   fetchInitialData: async () => {
     const { data: mus } = await supabase.from('musicas').select('*');
