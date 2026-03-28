@@ -36,12 +36,22 @@ export default function Eventos() {
   
   const { fields, append, remove } = useFieldArray({ control, name: "equipe" });
 
-  const handleSave = (data: any) => {
-    upsertEvento(data);
-    toast.success("Escala salva!");
+  const handleSave = async (data: any) => {
+  try {
+    // Garante que o estado 'Pendente' seja o padrão para novos membros da equipe
+    const equipeFormatada = data.equipe?.map((slot: any) => ({
+      ...slot,
+      status: slot.status || 'Pendente'
+    }));
+
+    await upsertEvento({ ...data, equipe: equipeFormatada });
     setOpen(false);
     reset();
-  };
+  } catch (error) {
+    console.error(error);
+    toast.error("Erro ao processar formulário.");
+  }
+};
 
   const exportarWhatsApp = (ev: any) => {
     let texto = `*🎸 ESCALA: ${ev.titulo.toUpperCase()}*\n📅 *DATA:* ${format(parseISO(ev.data), "dd/MM")}\n\n*🎶 SETLIST:*\n`;
