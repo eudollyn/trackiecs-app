@@ -1,103 +1,55 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { nanoid } from 'nanoid';
-import type { Musica, Membro, Evento, User } from '../shared/types'; 
+import { supabase } from '../lib/supabase';
+import type { Musica, Membro, Evento } from '../shared/types';
 
 interface TrackIECSState {
-  isAuth: boolean;
-  user: User | null;
   musicas: Musica[];
   membros: Membro[];
   eventos: Evento[];
   
-  login: (u: User) => void;
-  logout: () => void;
-  addMusica: (m: Omit<Musica, 'id' | 'createdAt'>) => void;
-  deleteMusica: (id: string) => void;
-  addMembro: (m: Omit<Membro, 'id'>) => void;
-  deleteMembro: (id: string) => void;
-  upsertEvento: (ev: any) => void;
-  deleteEvento: (id: string) => void;
-  // NOVAS ACTIONS
-  confirmPresenca: (eventoId: string, membroId: string) => void;
-  recusarPresenca: (eventoId: string, membroId: string) => void;
+  // Função para carregar tudo do banco ao abrir o app
+  fetchInitialData: () => Promise<void>;
+  
+  // Actions que salvam no Banco
+  addMusica: (m: any) => Promise<void>;
+  addMembro: (m: any) => Promise<void>;
+  upsertEvento: (ev: any) => Promise<void>;
+  deleteEvento: (id: string) => Promise<void>;
 }
 
-export const useAppStore = create<TrackIECSState>()(
-  persist(
-    (set) => ({
-      isAuth: false,
-      user: null,
-      musicas: [],
-      membros: [],
-      eventos: [],
+export const useAppStore = create<TrackIECSState>((set, get) => ({
+  musicas: [],
+  membros: [],
+  eventos: [],
 
-      login: (u) => set({ isAuth: true, user: u }),
-      logout: () => set({ isAuth: false, user: null }),
+  fetchInitialData: async () => {
+    const { data: mus } = await supabase.from('musicas').select('*');
+    const { data: mem } = await supabase.from('membros').select('*');
+    const { data: eve } = await supabase.from('eventos').select('*');
+    set({ musicas: mus || [], membros: mem || [], eventos: eve || [] });
+  },
 
-      addMusica: (m) => set((s) => ({
-        musicas: [{ ...m, id: nanoid(), createdAt: Date.now() }, ...s.musicas]
-      })),
+  addMusica: async (m) => {
+    await supabase.from('musicas').insert([m]);
+    get().fetchInitialData();
+  },
 
-      deleteMusica: (id) => set((s) => ({
-        musicas: s.musicas.filter(m => m.id !== id)
-      })),
+  addMembro: async (m) => {
+    await supabase.from('membros').insert([m]);
+    get().fetchInitialData();
+  },
 
-      addMembro: (m) => set((s) => ({
-        membros: [{ ...m, id: nanoid() }, ...s.membros]
-      })),
+  upsertEvento: async (ev) => {
+    if (ev.id) {
+        await supabase.from('eventos').update(ev).eq('id', ev.id);
+    } else {
+        await supabase.from('eventos').insert([ev]);
+    }
+    get().fetchInitialData();
+  },
 
-      deleteMembro: (id) => set((s) => ({
-        membros: s.membros.filter(m => m.id !== id)
-      })),
-
-      upsertEvento: (ev) => set((s) => {
-        const index = s.eventos.findIndex(e => e.id === ev.id);
-        const newEv = { 
-          id: nanoid(), 
-          status: 'Pendente', 
-          equipe: (ev.equipe || []).map((slot: any) => ({ ...slot, status: 'Pendente' })), 
-          ...ev 
-        };
-        if (index > -1) {
-          const updated = [...s.eventos];
-          updated[index] = { ...updated[index], ...ev };
-          return { eventos: updated };
-        }
-        return { eventos: [newEv, ...s.eventos] };
-      }),
-
-      deleteEvento: (id) => set((s) => ({
-        eventos: s.eventos.filter(e => e.id !== id)
-      })),
-
-      confirmPresenca: (eventoId: string, membroId: string) => set((state) => ({
-  eventos: state.eventos.map(ev => 
-    ev.id === eventoId 
-      ? { 
-          ...ev, 
-          equipe: ev.equipe.map(slot => 
-            slot.membroId === membroId ? { ...slot, status: 'Confirmado' } : slot
-          ) 
-        } 
-      : ev
-  )
-})),
-
-recusarPresenca: (eventoId: string, membroId: string) => set((state) => ({
-  eventos: state.eventos.map(ev => 
-    ev.id === eventoId 
-      ? { 
-          ...ev, 
-          equipe: ev.equipe.map(slot => 
-            slot.membroId === membroId ? { ...slot, status: 'Recusado' } : slot
-          ) 
-        } 
-      : ev
-  )
-})),
-
-    }),
-    { name: 'track-iecs-v3' }
-  )
-);
+  deleteEvento: async (id) => {
+    await supabase.from('eventos').delete().eq('id', id);
+    get().fetchInitialData();
+  }
+}));
