@@ -10,13 +10,18 @@ export interface User {
 export interface Musica {
   id: string;
   titulo: string;
-  artista: string;
+  artista: string; // Obrigatório para o layout
   tom: string;
+  tomOriginal?: string; // Adicionado para bater com o Dialog
   bpm?: number;
-  intensidade: number;
-  letra?: string; // NOVO: Campo para letra/cifra
+  intensidade: number; // 1 a 10
+  letra?: string;
+  categoria?: string; 
   linkCifra?: string;
   linkVideo?: string;
+  link?: string; 
+  tags?: string[]; // Adicionado para o salvamento
+  ativo?: boolean; // Adicionado para o salvamento
   createdAt: number;
 }
 
@@ -33,7 +38,7 @@ export interface Membro {
 export interface EventoSlot {
   membroId: string;
   papel: string;
-  status: 'Pendente' | 'Confirmado' | 'Recusado'; // EVOLUÇÃO: Status de presença
+  status: 'Pendente' | 'Confirmado' | 'Recusado';
 }
 
 export interface Evento {

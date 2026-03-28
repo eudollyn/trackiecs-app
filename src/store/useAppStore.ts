@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { nanoid } from 'nanoid';
-import type { Musica, Membro, Evento, User } from '../shared/types';
+import type { Musica, Membro, Evento, User } from '../shared/types'; 
 
 interface TrackIECSState {
   isAuth: boolean;
