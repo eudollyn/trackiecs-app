@@ -74,20 +74,21 @@ export default function MainLayout() {
 
       {/* NAVEGAÇÃO DE BAIXO PARA MOBILE (MODERNO) */}
       {isMobile && (
-        <Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000, bgcolor: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,0.05)' }} elevation={3}>
-          <BottomNavigation
-            showLabels
-            value={location.pathname}
-            onChange={(_, newValue) => navigate(newValue)}
-            sx={{ bgcolor: 'transparent', height: 70 }}
-          >
-            <BottomNavigationAction label="Início" value="/" icon={<LayoutDashboard size={22}/>} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-selected': { color: '#818cf8' } }} />
-            <BottomNavigationAction label="Músicas" value="/musicas" icon={<Music2 size={22}/>} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-selected': { color: '#818cf8' } }} />
-            <BottomNavigationAction label="Escalas" value="/escalas" icon={<CalendarRange size={22}/>} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-selected': { color: '#818cf8' } }} />
-            <BottomNavigationAction label="Analytics" value="/analytics" icon={<BarChart3 size={22}/>} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-selected': { color: '#818cf8' } }} />
-          </BottomNavigation>
-        </Paper>
-      )}
+  <Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000, bgcolor: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,0.05)' }} elevation={3}>
+    <BottomNavigation
+      showLabels
+      value={location.pathname}
+      onChange={(_, newValue) => navigate(newValue)}
+      sx={{ bgcolor: 'transparent', height: 75 }}
+    >
+      <BottomNavigationAction label="Início" value="/" icon={<LayoutDashboard size={20}/>} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-selected': { color: '#818cf8' } }} />
+      <BottomNavigationAction label="Músicas" value="/musicas" icon={<Music2 size={20}/>} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-selected': { color: '#818cf8' } }} />
+      <BottomNavigationAction label="Escalas" value="/escalas" icon={<CalendarRange size={20}/>} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-selected': { color: '#818cf8' } }} />
+      <BottomNavigationAction label="Equipe" value="/membros" icon={<Users2 size={20}/>} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-selected': { color: '#818cf8' } }} />
+      <BottomNavigationAction label="Avisos" value="/analytics" icon={<BarChart3 size={20}/>} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-selected': { color: '#818cf8' } }} />
+    </BottomNavigation>
+  </Paper>
+)}
     </Box>
   );
 }

@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Grid, Paper, Avatar, Typography, Button, TextField, InputAdornment, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Fab } from '@mui/material';
+import { 
+  Box, Grid, Paper, Avatar, Typography, Button, TextField, 
+  InputAdornment, Stack, Dialog, DialogTitle, DialogContent, 
+  DialogActions, IconButton, Fab 
+} from '@mui/material'; // IconButton ADICIONADO AQUI
 import { Search, UserPlus, Trash2, Plus } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { toast } from 'sonner';
 
 const inputStyle = {
   '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)', fontWeight: 600 },
@@ -15,23 +20,24 @@ export default function Membros() {
   const [nome, setNome] = useState('');
   const [funcoes, setFuncoes] = useState('');
 
-  // LÓGICA CORRIGIDA: Se for admin ou o ID especial
   const isAdmin = currentMemberId === 'admin';
-  const filtered = membros.filter((m: any) => m.nome.toLowerCase().includes(search.toLowerCase()));
+  const filtered = (membros || []).filter((m: any) => 
+    m.nome?.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleAdd = async () => {
-    if(!nome) return;
-    await addMembro({ nome, email: '', funcoes });
+    if(!nome) return toast.error("Preencha o nome");
+    await addMembro({ nome, funcoes });
     setOpen(false);
     setNome(''); setFuncoes('');
   };
 
   return (
-    <Box sx={{ pb: 10 }}>
+    <Box sx={{ pb: 12 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
         <Typography variant="h3" fontWeight={950} sx={{ color: '#FFF', fontSize: { xs: '2.5rem', md: '3.5rem' } }}>Equipe</Typography>
         
-        {/* BOTÃO PARA DESKTOP */}
+        {/* BOTÃO ADICIONAR (Sempre visível para Admin no topo ou rodapé) */}
         {isAdmin && (
           <Button 
             variant="contained" 
@@ -58,7 +64,9 @@ export default function Membros() {
               border: '1px solid rgba(255, 255, 255, 0.1)', textAlign: 'center',
               position: 'relative'
             }}>
-              <Avatar sx={{ width: 64, height: 64, bgcolor: '#818cf8', margin: '0 auto 15px', fontSize: '1.5rem', fontWeight: 900 }}>{m.nome[0]}</Avatar>
+              <Avatar sx={{ width: 64, height: 64, bgcolor: '#818cf8', margin: '0 auto 15px', fontSize: '1.5rem', fontWeight: 900 }}>
+                {m.nome ? m.nome[0] : '?'}
+              </Avatar>
               <Typography variant="h6" fontWeight={800} color="#FFF">{m.nome}</Typography>
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', mb: 2, display: 'block' }}>
                 {Array.isArray(m.funcoes) ? m.funcoes.join(', ') : m.funcoes || 'Membro'}
@@ -77,12 +85,11 @@ export default function Membros() {
         ))}
       </Grid>
 
-      {/* BOTÃO FLUTUANTE (FAB) PARA MOBILE - MUITO MELHOR UX */}
+      {/* FAB: Botão de ação flutuante que não some no Mobile */}
       {isAdmin && (
         <Fab 
-          color="primary" 
           onClick={() => setOpen(true)} 
-          sx={{ position: 'fixed', bottom: 90, right: 20, bgcolor: '#818cf8', display: {xs: 'flex', md: 'none'} }}
+          sx={{ position: 'fixed', bottom: 100, right: 20, bgcolor: '#818cf8', color: 'white', display: {md: 'none'} }}
         >
           <Plus />
         </Fab>
@@ -90,14 +97,14 @@ export default function Membros() {
 
       <Dialog open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { bgcolor: '#131c2e', color: 'white', borderRadius: 7 } }}>
          <DialogTitle sx={{ fontWeight: 900 }}>Novo Ministro</DialogTitle>
-         <DialogContent sx={{ minWidth: {xs: '90vw', sm: 400} }}>
+         <DialogContent sx={{ minWidth: {xs: '85vw', sm: 400} }}>
             <Stack spacing={3} mt={1}>
               <TextField label="Nome Completo" fullWidth value={nome} onChange={e=>setNome(e.target.value)} variant="filled" sx={inputStyle} />
               <TextField label="Funções" placeholder="Violão, Voz..." fullWidth value={funcoes} onChange={e=>setFuncoes(e.target.value)} variant="filled" sx={inputStyle} />
             </Stack>
          </DialogContent>
          <DialogActions sx={{ p: 4 }}>
-            <Button variant="contained" fullWidth onClick={handleAdd} sx={{ bgcolor: '#818cf8', fontWeight: 900, py: 1.5, borderRadius: 3 }}>CADASTRAR INTEGRANTE</Button>
+            <Button variant="contained" fullWidth onClick={handleAdd} sx={{ bgcolor: '#818cf8', fontWeight: 900, py: 1.5, borderRadius: 3 }}>SALVAR</Button>
          </DialogActions>
       </Dialog>
     </Box>
