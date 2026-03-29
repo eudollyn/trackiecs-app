@@ -11,10 +11,20 @@ export const useAppStore = create<any>((set, get) => ({
   eventos: [],
 
   login: async (email: string) => {
-    const { data: mem } = await supabase.from('membros').select('*').eq('email', email).maybeSingle();
-    set({ isAuth: true, currentMemberId: mem?.id || 'admin', user: { nome: mem?.nome || 'Admin', email } });
-    get().fetchInitialData();
-  },
+  const masterEmail = 'ehenriquesilva021@gmail.com'; // SEU E-MAIL MESTRE
+  const { data: mem } = await supabase.from('membros').select('*').eq('email', email).maybeSingle();
+  
+  set({ 
+    isAuth: true, 
+    // Se for o seu e-mail, o ID é 'admin' para liberar todos os botões
+    currentMemberId: email === masterEmail ? 'admin' : (mem?.id || 'membro_logado'), 
+    user: { 
+      nome: mem?.nome || 'Administrador', 
+      email 
+    } 
+  });
+  get().fetchInitialData();
+},
 
   logout: () => set({ isAuth: false, user: null }),
 
