@@ -9,13 +9,17 @@ interface TrackIECSState {
   musicas: Musica[];
   membros: Membro[];
   eventos: Evento[];
+  
   login: (u: User) => void;
   logout: () => void;
   fetchInitialData: () => Promise<void>;
+  
   addMusica: (m: any) => Promise<void>;
   deleteMusica: (id: string) => Promise<void>;
+  
   addMembro: (m: any) => Promise<void>;
   deleteMembro: (id: string) => Promise<void>;
+
   upsertEvento: (ev: any) => Promise<void>;
   deleteEvento: (id: string) => Promise<void>;
   confirmPresenca: (eventoId: string, membroId: string) => Promise<void>;
@@ -23,56 +27,76 @@ interface TrackIECSState {
 }
 
 export const useAppStore = create<TrackIECSState>((set, get) => ({
+  // ESTADOS INICIAIS
   isAuth: false,
   user: null,
   musicas: [],
   membros: [],
   eventos: [],
 
-  login: async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) set({ isAuth: true, user: data.user as any });
-  },
-  logout: async () => {
-    await supabase.auth.signOut();
-    set({ isAuth: false, user: null });
-  }
+  // AUTENTICAÇÃO SIMPLES (PARA DEMO)
+  login: (u) => set({ isAuth: true, user: u }),
+  logout: () => set({ isAuth: false, user: null }),
 
+  // CARREGAMENTO GLOBAL
   fetchInitialData: async () => {
-    const { data: mus } = await supabase.from('musicas').select('*').order('titulo');
-    const { data: mem } = await supabase.from('membros').select('*').order('nome');
-    const { data: eve } = await supabase.from('eventos').select('*').order('data', { ascending: false });
-    set({ musicas: mus || [], membros: mem || [], eventos: eve || [] });
+    try {
+      const { data: mus } = await supabase.from('musicas').select('*').order('titulo');
+      const { data: mem } = await supabase.from('membros').select('*').order('nome');
+      const { data: eve } = await supabase.from('eventos').select('*').order('data', { ascending: false });
+      
+      set({ 
+        musicas: mus || [], 
+        membros: mem || [], 
+        eventos: eve || [] 
+      });
+    } catch (err) {
+      console.error("Erro ao buscar dados:", err);
+    }
   },
 
+  // MÚSICAS
   addMusica: async (m) => {
-    await supabase.from('musicas').insert([{
+    const { error } = await supabase.from('musicas').insert([{
       titulo: m.titulo, artista: m.artista, tom: m.tom,
-      bpm: m.bpm ? parseInt(m.bpm) : null, intensidade: m.intensidade, letra: m.letra
+      bpm: m.bpm ? parseInt(m.bpm) : null, intensidade: m.intensidade,
+      letra: m.letra, link_cifra: m.linkCifra, link_video: m.linkVideo
     }]);
-    get().fetchInitialData();
+    if (!error) {
+      await get().fetchInitialData();
+      toast.success("Música salva!");
+    } else {
+      toast.error("Erro ao salvar música.");
+    }
   },
 
   deleteMusica: async (id) => {
-    await supabase.from('musicas').delete().eq('id', id);
-    get().fetchInitialData();
+    const { error } = await supabase.from('musicas').delete().eq('id', id);
+    if (!error) get().fetchInitialData();
   },
 
+  // MEMBROS
   addMembro: async (m) => {
-    await supabase.from('membros').insert([m]);
-    get().fetchInitialData();
+    const { error } = await supabase.from('membros').insert([{
+      nome: m.nome, email: m.email, funcoes: m.funcoes, ativo: true
+    }]);
+    if (!error) {
+      await get().fetchInitialData();
+      toast.success("Membro adicionado!");
+    }
   },
 
   deleteMembro: async (id) => {
-    await supabase.from('membros').delete().eq('id', id);
-    get().fetchInitialData();
+    const { error } = await supabase.from('membros').delete().eq('id', id);
+    if (!error) get().fetchInitialData();
   },
 
+  // ESCALAS (EVENTOS)
   upsertEvento: async (ev) => {
     const dados = {
       titulo: ev.titulo,
       data: ev.data,
-      hora_inicio: ev.horaInicio || ev.hora_inicio,
+      hora_inicio: ev.horaInicio,
       local: ev.local || 'Principal',
       setlist: ev.setlist || [],
       equipe: ev.equipe || [],
@@ -83,31 +107,34 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
       ? await supabase.from('eventos').update(dados).eq('id', ev.id)
       : await supabase.from('eventos').insert([dados]);
 
-    if (error) toast.error("Erro ao salvar escala.");
-    else {
+    if (!error) {
       await get().fetchInitialData();
-      toast.success("Escala salva!");
+      toast.success("Escala agendada!");
+    } else {
+      console.error(error);
+      toast.error("Erro ao salvar escala.");
     }
   },
 
   deleteEvento: async (id) => {
-    await supabase.from('eventos').delete().eq('id', id);
-    get().fetchInitialData();
+    const { error } = await supabase.from('eventos').delete().eq('id', id);
+    if (!error) get().fetchInitialData();
   },
 
+  // PRESENÇA EM TEMPO REAL
   confirmPresenca: async (evId, mId) => {
     const ev = get().eventos.find(e => e.id === evId);
     if (!ev) return;
     const novaEquipe = ev.equipe.map((s: any) => s.membroId === mId ? { ...s, status: 'Confirmado' } : s);
-    await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', evId);
-    get().fetchInitialData();
+    const { error } = await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', evId);
+    if (!error) get().fetchInitialData();
   },
 
   recusarPresenca: async (evId, mId) => {
     const ev = get().eventos.find(e => e.id === evId);
     if (!ev) return;
     const novaEquipe = ev.equipe.map((s: any) => s.membroId === mId ? { ...s, status: 'Recusado' } : s);
-    await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', evId);
-    get().fetchInitialData();
+    const { error } = await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', evId);
+    if (!error) get().fetchInitialData();
   }
 }));
