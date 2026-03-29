@@ -48,13 +48,16 @@ export default function MusicaDialog({ open, onClose, initialData }: any) {
   }, [initialData, reset, open]);
 
   const onSubmit = (data: any) => {
-    addMusica({ 
-      ...data, 
-      id: initialData?.id || nanoid(), 
-      createdAt: Date.now() 
+    addMusica({
+      titulo: data.titulo,
+      artista: data.artista,
+      tom: data.tom,
+      bpm: data.bpm,
+      intensidade: data.intensidade,
+      letra: data.letra,
+      linkVideo: data.link
     });
     onClose();
-    reset();
   };
 
   return (

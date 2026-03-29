@@ -10,7 +10,6 @@ interface TrackIECSState {
   musicas: Musica[];
   membros: Membro[];
   eventos: Evento[];
-  
   login: (email: string) => Promise<void>;
   logout: () => void;
   fetchInitialData: () => Promise<void>;
@@ -32,21 +31,13 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
   membros: [],
   eventos: [],
 
-  // LOGIN INTELIGENTE: Vincula o e-mail ao membro da tabela
-  login: async (email: string) => {
-    const { data: mem } = await supabase.from('membros').select('*').eq('email', email).single();
-    
+  login: async (email) => {
+    const { data: mem } = await supabase.from('membros').select('*').eq('email', email).maybeSingle();
     if (mem) {
-      set({ 
-        isAuth: true, 
-        currentMemberId: mem.id,
-        user: { id: mem.id, nome: mem.nome, email: mem.email } 
-      });
-      toast.success(`Bem-vindo, ${mem.nome}!`);
+      set({ isAuth: true, currentMemberId: mem.id, user: { id: mem.id, nome: mem.nome, email: mem.email } });
+      toast.success(`Olá, ${mem.nome}`);
     } else {
-      // Caso não ache na tabela de membros, entra como admin genérico para demo
-      set({ isAuth: true, currentMemberId: 'admin', user: { id: '0', nome: 'Admin', email } });
-      toast.info("Logado como Administrador");
+      set({ isAuth: true, currentMemberId: 'admin', user: { id: 'admin', nome: 'Admin', email } });
     }
   },
 
@@ -55,51 +46,65 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
   fetchInitialData: async () => {
     const { data: mus } = await supabase.from('musicas').select('*').order('titulo');
     const { data: mem } = await supabase.from('membros').select('*').order('nome');
-    const { data: eve } = await supabase.from('eventos').select('*').order('data', { ascending: false });
+    const { data: eve } = await supabase.from('eventos').select('*').order('data');
     set({ musicas: mus || [], membros: mem || [], eventos: eve || [] });
   },
 
   addMusica: async (m) => {
-    await supabase.from('musicas').insert([{ ...m, created_at: new Date() }]);
-    await get().fetchInitialData();
-  },
-
-  deleteMusica: async (id) => {
-    await supabase.from('musicas').delete().eq('id', id);
-    await get().fetchInitialData();
+    // MAPEAMENTO PARA O BANCO (Snake Case)
+    const payload = {
+      titulo: m.titulo,
+      artista: m.artista,
+      tom: m.tom,
+      bpm: m.bpm ? parseInt(m.bpm) : null,
+      intensidade: parseInt(m.intensidade),
+      letra: m.letra,
+      link_cifra: m.linkCifra || m.link,
+      link_video: m.linkVideo || m.link
+    };
+    const { error } = await supabase.from('musicas').insert([payload]);
+    if (!error) await get().fetchInitialData();
+    else toast.error("Erro no Banco: Nome de coluna inválido.");
   },
 
   addMembro: async (m) => {
-    await supabase.from('membros').insert([m]);
-    await get().fetchInitialData();
-  },
-
-  deleteMembro: async (id) => {
-    await supabase.from('membros').delete().eq('id', id);
-    await get().fetchInitialData();
-  },
-
-  upsertEvento: async (ev) => {
-    const dados = {
-      titulo: ev.titulo, data: ev.data, hora_inicio: ev.horaInicio,
-      local: ev.local || 'Principal', setlist: ev.setlist || [], equipe: ev.equipe || [], status: 'Pendente'
+    const payload = { 
+      nome: m.nome, 
+      email: m.email, 
+      funcoes: m.funcoes, 
+      telefone: m.telefone, 
+      ativo: true 
     };
-    const { error } = ev.id ? await supabase.from('eventos').update(dados).eq('id', ev.id) : await supabase.from('eventos').insert([dados]);
+    const { error } = await supabase.from('membros').insert([payload]);
     if (!error) await get().fetchInitialData();
   },
 
-  deleteEvento: async (id) => {
-    await supabase.from('eventos').delete().eq('id', id);
-    await get().fetchInitialData();
+  upsertEvento: async (ev) => {
+    const payload = {
+      titulo: ev.titulo,
+      data: ev.data,
+      hora_inicio: ev.horaInicio,
+      local: ev.local || 'Principal',
+      setlist: ev.setlist || [],
+      equipe: ev.equipe || [],
+      status: 'Pendente'
+    };
+    const { error } = ev.id 
+      ? await supabase.from('eventos').update(payload).eq('id', ev.id) 
+      : await supabase.from('eventos').insert([payload]);
+    if (!error) await get().fetchInitialData();
   },
+
+  deleteMusica: async (id) => { await supabase.from('musicas').delete().eq('id', id); get().fetchInitialData(); },
+  deleteMembro: async (id) => { await supabase.from('membros').delete().eq('id', id); get().fetchInitialData(); },
+  deleteEvento: async (id) => { await supabase.from('eventos').delete().eq('id', id); get().fetchInitialData(); },
 
   confirmPresenca: async (evId, mId) => {
     const ev = get().eventos.find(e => e.id === evId);
     if (!ev) return;
     const novaEquipe = ev.equipe.map((s: any) => s.membroId === mId ? { ...s, status: 'Confirmado' } : s);
     await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', evId);
-    await get().fetchInitialData();
-    toast.success("Presença confirmada!");
+    get().fetchInitialData();
   },
 
   recusarPresenca: async (evId, mId) => {
@@ -107,7 +112,6 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
     if (!ev) return;
     const novaEquipe = ev.equipe.map((s: any) => s.membroId === mId ? { ...s, status: 'Recusado' } : s);
     await supabase.from('eventos').update({ equipe: novaEquipe }).eq('id', evId);
-    await get().fetchInitialData();
-    toast.error("Ausência registrada.");
+    get().fetchInitialData();
   }
 }));
