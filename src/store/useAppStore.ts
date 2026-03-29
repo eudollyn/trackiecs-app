@@ -29,8 +29,14 @@ export const useAppStore = create<TrackIECSState>((set, get) => ({
   membros: [],
   eventos: [],
 
-  login: (u) => set({ isAuth: true, user: u }),
-  logout: () => set({ isAuth: false, user: null }),
+  login: async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) set({ isAuth: true, user: data.user as any });
+  },
+  logout: async () => {
+    await supabase.auth.signOut();
+    set({ isAuth: false, user: null });
+  }
 
   fetchInitialData: async () => {
     const { data: mus } = await supabase.from('musicas').select('*').order('titulo');
