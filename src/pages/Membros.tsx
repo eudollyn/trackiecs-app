@@ -57,8 +57,8 @@ export default function Membros() {
       />
 
       <Grid container spacing={3}>
-        {filtered.map((m: any) => (
-          <Grid item xs={12} sm={6} lg={4} key={m.id}>
+        {filtered.map((m) => (
+          <Grid xs={12} sm={6} md={4} key={m.id}>
             <Paper elevation={0} sx={{ 
               p: 3, borderRadius: 5, background: 'rgba(255, 255, 255, 0.04)', 
               border: '1px solid rgba(255, 255, 255, 0.1)', textAlign: 'center',
